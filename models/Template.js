@@ -18,18 +18,11 @@ const TemplateSchema = new mongoose.Schema(
       enum: ['Professional', 'Creative', 'Minimalist', 'Modern', 'Classic', 'Executive', 'Resume', 'Cover Letter', 'CV', 'Portfolio', 'Other'],
       default: 'Professional',
     },
-    // Legacy content field (kept for backward compatibility)
-    content: {
-      type: String,
-    },
     
     // Visual Assets
     thumbnail: {
       type: String,
       default: '/assets/images/templates/default.jpg',
-    },
-    preview: {
-      type: String,
     },
     
     // Template Engine & Data
@@ -105,25 +98,6 @@ const TemplateSchema = new mongoose.Schema(
     tags: {
       type: [String],
       default: [],
-    },
-    
-    // Essential Metadata
-    metadata: {
-      colorScheme: {
-        type: String,
-        enum: ['light', 'dark', 'colorful'],
-        default: 'light',
-      },
-      layout: {
-        type: String,
-        enum: ['single-column', 'two-column', 'hybrid'],
-        default: 'single-column',
-      },
-      complexity: {
-        type: String,
-        enum: ['simple', 'moderate', 'complex'],
-        default: 'moderate',
-      },
     },
     
     // Additional fields

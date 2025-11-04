@@ -35,11 +35,8 @@ export async function PUT(request, { params }) {
       name, 
       description, 
       category, 
-      content, 
       tags, 
       status, 
-      thumbnail, 
-      preview,
       createdBy,
       renderEngine,
       canvasData,
@@ -48,7 +45,7 @@ export async function PUT(request, { params }) {
       isPremium,
       isPopular,
       isNewTemplate,
-      metadata
+      thumbnail
     } = body;
 
     // Validate required fields
@@ -64,30 +61,35 @@ export async function PUT(request, { params }) {
       name,
       description: description !== undefined ? description : '',
       category,
-      content: content !== undefined ? content : '',
       tags: tags || [],
-      status: status || 'draft',
-      thumbnail: thumbnail || '/assets/images/templates/default.jpg',
+      status: status !== undefined ? status : 'draft',
       createdBy: createdBy || 'System',
     };
 
     // Add optional fields if provided
-    if (preview !== undefined) updateData.preview = preview;
     if (renderEngine !== undefined) updateData.renderEngine = renderEngine;
     if (canvasData !== undefined) updateData.canvasData = canvasData;
     if (builderData !== undefined) updateData.builderData = builderData;
-    if (isActive !== undefined) updateData.isActive = isActive;
+    if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
+
+    // Sync status with isActive - prioritize status field
+    if (status !== undefined) {
+      if (status === 'active') {
+        updateData.isActive = true;
+      } else if (status === 'inactive' || status === 'draft') {
+        updateData.isActive = false;
+      }
+    } else if (isActive !== undefined) {
+      // If status not provided, use isActive checkbox value
+      updateData.isActive = isActive;
+      // Sync status based on isActive
+      updateData.status = isActive ? 'active' : 'draft';
+    }
+
+    // Set other flags
     if (isPremium !== undefined) updateData.isPremium = isPremium;
     if (isPopular !== undefined) updateData.isPopular = isPopular;
     if (isNewTemplate !== undefined) updateData.isNewTemplate = isNewTemplate;
-    if (metadata !== undefined) updateData.metadata = metadata;
-
-    // Sync status with isActive
-    if (status === 'active') {
-      updateData.isActive = true;
-    } else if (status === 'inactive' || status === 'draft') {
-      updateData.isActive = false;
-    }
 
     const template = await Template.findByIdAndUpdate(
       id,

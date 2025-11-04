@@ -25,11 +25,8 @@ export async function POST(request) {
       name, 
       description, 
       category, 
-      content, 
       tags, 
       status, 
-      thumbnail, 
-      preview,
       createdBy,
       renderEngine,
       canvasData,
@@ -38,7 +35,7 @@ export async function POST(request) {
       isPremium,
       isPopular,
       isNewTemplate,
-      metadata
+      thumbnail
     } = body;
 
     // Validate required fields
@@ -50,28 +47,22 @@ export async function POST(request) {
     }
 
     // Build template object
+    const finalStatus = status || 'draft';
     const templateData = {
       name,
       description: description || '',
       category,
-      content: content || '',
       tags: tags || [],
-      status: status || 'draft',
-      thumbnail: thumbnail || '/assets/images/templates/default.jpg',
-      preview: preview || thumbnail || '/assets/images/templates/default.jpg',
+      status: finalStatus,
       createdBy: createdBy || 'System',
       renderEngine: renderEngine || 'builder',
       canvasData: canvasData || null,
       builderData: builderData || null,
-      isActive: isActive !== undefined ? isActive : (status === 'active'),
+      isActive: isActive !== undefined ? isActive : (finalStatus === 'active'),
       isPremium: isPremium || false,
       isPopular: isPopular || false,
       isNewTemplate: isNewTemplate || false,
-      metadata: metadata || {
-        colorScheme: 'light',
-        layout: 'single-column',
-        complexity: 'moderate',
-      },
+      thumbnail: thumbnail || '/assets/images/templates/default.jpg',
     };
 
     const template = await Template.create(templateData);

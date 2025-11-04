@@ -14,6 +14,7 @@ import {
 } from "react-table";
 import GlobalFilter from "./GlobalFilter";
 import TemplateModal from "./TemplateModal";
+import Modal from "@/components/ui/Modal";
 import { toast } from "react-toastify";
 
 const COLUMNS = [
@@ -30,10 +31,14 @@ const COLUMNS = [
     accessor: "name",
     Cell: (row) => {
       const template = row.row.original;
+      const { onPreview } = row.row.original;
       return (
         <div>
           <span className="inline-flex items-center">
-            <span className="w-10 h-10 rounded ltr:mr-3 rtl:ml-3 flex-none bg-slate-600 overflow-hidden">
+            <span 
+              className="w-10 h-10 rounded ltr:mr-3 rtl:ml-3 flex-none bg-slate-600 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => onPreview && onPreview(template)}
+            >
               <img
                 src={template.thumbnail || "/assets/images/templates/default.jpg"}
                 alt={template.name}
@@ -254,6 +259,8 @@ const TemplatesTable = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState(null);
 
   // Fetch templates from API
   const fetchTemplates = async () => {
@@ -343,12 +350,18 @@ const TemplatesTable = () => {
     }
   };
 
-  // Add onEdit and onDelete to each template object for the table
+  const handlePreviewTemplate = (template) => {
+    setPreviewTemplate(template);
+    setIsPreviewModalOpen(true);
+  };
+
+  // Add onEdit, onDelete, and onPreview to each template object for the table
   const tableData = useMemo(() => {
     return templates.map((template) => ({
       ...template,
       onEdit: handleEditTemplate,
       onDelete: handleDeleteTemplate,
+      onPreview: handlePreviewTemplate,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates]);
@@ -359,6 +372,9 @@ const TemplatesTable = () => {
     {
       columns,
       data: tableData,
+      initialState: {
+        pageSize: 10,
+      },
     },
     useGlobalFilter,
     useSortBy,
@@ -610,6 +626,32 @@ const TemplatesTable = () => {
         template={selectedTemplate}
         isEdit={isEditMode}
       />
+
+      {/* Preview Modal */}
+      <Modal
+        activeModal={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setPreviewTemplate(null);
+        }}
+        title={previewTemplate ? previewTemplate.name : "Template Preview"}
+        className="max-w-4xl"
+        centered
+        scrollContent
+      >
+        {previewTemplate && (
+          <div className="flex justify-center items-center bg-white dark:bg-slate-800 rounded-lg p-4">
+            <img
+              src={previewTemplate.thumbnail || "/assets/images/templates/default.jpg"}
+              alt={previewTemplate.name}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              onError={(e) => {
+                e.target.src = "/assets/images/templates/default.jpg";
+              }}
+            />
+          </div>
+        )}
+      </Modal>
     </>
   );
 };

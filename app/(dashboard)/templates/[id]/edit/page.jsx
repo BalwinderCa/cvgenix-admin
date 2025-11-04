@@ -154,6 +154,57 @@ export default function TemplateEditorPage() {
     };
   }, [templateId, isNewTemplate, canvasState.fabricCanvas]);
 
+  // Capture canvas as image and upload
+  const captureCanvasAsImage = async (canvas) => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Use toDataURL to get the canvas as base64 image
+        const dataURL = canvas.toDataURL({
+          format: 'jpeg',
+          quality: 0.9,
+          multiplier: 2, // Higher quality for thumbnail
+        });
+
+        // Convert base64 data URL to blob
+        const base64Data = dataURL.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+        // Create a file from blob
+        const timestamp = Date.now();
+        const fileName = `template_${templateId || 'new'}_${timestamp}.jpg`;
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+        // Create FormData and upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'thumbnail');
+        formData.append('source', 'canvas');
+
+        fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              resolve(result.data.url);
+            } else {
+              reject(new Error(result.error || 'Failed to upload image'));
+            }
+          })
+          .catch(reject);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   // Handle save template
   const handleSaveTemplate = async () => {
     if (!canvasState.fabricCanvas) {
@@ -163,7 +214,8 @@ export default function TemplateEditorPage() {
 
     setIsSaving(true);
     try {
-      const canvasData = canvasState.fabricCanvas.toJSON();
+      const canvas = canvasState.fabricCanvas;
+      const canvasData = canvas.toJSON();
 
       // Get template name from user or use existing
       const templateName =
@@ -171,6 +223,17 @@ export default function TemplateEditorPage() {
       if (!templateName) {
         setIsSaving(false);
         return;
+      }
+
+      // Capture canvas as image and upload
+      let thumbnailUrl = templateData?.thumbnail || "/assets/images/templates/default.jpg";
+      try {
+        toast.info("Capturing canvas preview...");
+        thumbnailUrl = await captureCanvasAsImage(canvas);
+        toast.success("Preview image captured successfully");
+      } catch (error) {
+        console.error("Error capturing canvas image:", error);
+        toast.warning("Could not capture preview image, using existing thumbnail");
       }
 
       const templatePayload = {
@@ -184,18 +247,7 @@ export default function TemplateEditorPage() {
         isPopular: templateData?.isPopular || false,
         isNewTemplate: templateData?.isNewTemplate || false,
         tags: templateData?.tags || [],
-        thumbnail:
-          templateData?.thumbnail ||
-          "/assets/images/templates/default.jpg",
-        preview:
-          templateData?.preview ||
-          templateData?.thumbnail ||
-          "/assets/images/templates/default.jpg",
-        metadata: templateData?.metadata || {
-          colorScheme: "light",
-          layout: "single-column",
-          complexity: "moderate",
-        },
+        thumbnail: thumbnailUrl,
       };
 
       const url = isNewTemplate
