@@ -66,6 +66,18 @@ const COLUMNS = [
     },
   },
   {
+    Header: "Render Engine",
+    accessor: "renderEngine",
+    Cell: (row) => {
+      const engine = row?.cell?.value || "builder";
+      return (
+        <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded capitalize">
+          {engine}
+        </span>
+      );
+    },
+  },
+  {
     Header: "Tags",
     accessor: "tags",
     Cell: (row) => {
@@ -92,28 +104,59 @@ const COLUMNS = [
     Header: "Status",
     accessor: "status",
     Cell: (row) => {
+      const template = row.row.original;
+      const status = template.status || (template.isActive ? "active" : "inactive");
+      const badges = [];
+      
+      if (template.isPremium) {
+        badges.push(
+          <span key="premium" className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded mr-1">
+            Premium
+          </span>
+        );
+      }
+      if (template.isPopular) {
+        badges.push(
+          <span key="popular" className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded mr-1">
+            Popular
+          </span>
+        );
+      }
+      if (template.isNewTemplate) {
+        badges.push(
+          <span key="new" className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded mr-1">
+            New
+          </span>
+        );
+      }
+      
       return (
-        <span className="block w-full">
+        <div className="flex flex-col space-y-1">
           <span
-            className={`inline-block px-3 min-w-[90px] text-center mx-auto py-1 rounded-[999px] bg-opacity-25 ${
-              row?.cell?.value === "active"
+            className={`inline-block px-3 min-w-[90px] text-center py-1 rounded-[999px] bg-opacity-25 ${
+              status === "active"
                 ? "text-success-500 bg-success-500"
                 : ""
             } 
             ${
-              row?.cell?.value === "inactive"
+              status === "inactive"
                 ? "text-danger-500 bg-danger-500"
                 : ""
             }
             ${
-              row?.cell?.value === "draft"
+              status === "draft"
                 ? "text-warning-500 bg-warning-500"
                 : ""
             }`}
           >
-            {row?.cell?.value}
+            {status}
           </span>
-        </span>
+          {badges.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {badges}
+            </div>
+          )}
+        </div>
       );
     },
   },
@@ -141,13 +184,25 @@ const COLUMNS = [
       const { onEdit, onDelete } = row.row.original;
       return (
         <div className="flex space-x-3 rtl:space-x-reverse">
-          <Tooltip content="Edit" placement="top" arrow animation="shift-away">
+          <Tooltip content="Edit in Modal" placement="top" arrow animation="shift-away">
             <button
               className="action-btn"
               type="button"
               onClick={() => onEdit(row.row.original)}
             >
               <Icon icon="heroicons:pencil-square" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Edit in Canvas" placement="top" arrow animation="shift-away">
+            <button
+              className="action-btn"
+              type="button"
+              onClick={() => {
+                const templateId = row.row.original._id || row.row.original.id;
+                window.location.href = `/templates/${templateId}/edit`;
+              }}
+            >
+              <Icon icon="heroicons:paint-brush" />
             </button>
           </Tooltip>
           <Tooltip
@@ -374,6 +429,14 @@ const TemplatesTable = () => {
               text="Add Template"
               className="btn-primary"
               onClick={handleAddTemplate}
+            />
+            <Button
+              icon="heroicons:paint-brush"
+              text="Create with Canvas"
+              className="btn-primary"
+              onClick={() => {
+                window.location.href = "/templates/new/edit";
+              }}
             />
           </div>
         </div>

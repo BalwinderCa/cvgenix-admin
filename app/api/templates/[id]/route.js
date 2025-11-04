@@ -31,28 +31,67 @@ export async function PUT(request, { params }) {
     await connectDB();
     const { id } = params;
     const body = await request.json();
-    const { name, description, category, content, tags, status, thumbnail, createdBy } = body;
+    const { 
+      name, 
+      description, 
+      category, 
+      content, 
+      tags, 
+      status, 
+      thumbnail, 
+      preview,
+      createdBy,
+      renderEngine,
+      canvasData,
+      builderData,
+      isActive,
+      isPremium,
+      isPopular,
+      isNewTemplate,
+      metadata
+    } = body;
 
     // Validate required fields
-    if (!name || !category || !content) {
+    if (!name || !category) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: name, category, and content are required' },
+        { success: false, error: 'Missing required fields: name and category are required' },
         { status: 400 }
       );
     }
 
+    // Build update object
+    const updateData = {
+      name,
+      description: description !== undefined ? description : '',
+      category,
+      content: content !== undefined ? content : '',
+      tags: tags || [],
+      status: status || 'draft',
+      thumbnail: thumbnail || '/assets/images/templates/default.jpg',
+      createdBy: createdBy || 'System',
+    };
+
+    // Add optional fields if provided
+    if (preview !== undefined) updateData.preview = preview;
+    if (renderEngine !== undefined) updateData.renderEngine = renderEngine;
+    if (canvasData !== undefined) updateData.canvasData = canvasData;
+    if (builderData !== undefined) updateData.builderData = builderData;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (isPremium !== undefined) updateData.isPremium = isPremium;
+    if (isPopular !== undefined) updateData.isPopular = isPopular;
+    if (isNewTemplate !== undefined) updateData.isNewTemplate = isNewTemplate;
+    if (metadata !== undefined) updateData.metadata = metadata;
+
+    // Sync status with isActive
+    if (status === 'active') {
+      updateData.isActive = true;
+    } else if (status === 'inactive' || status === 'draft') {
+      updateData.isActive = false;
+    }
+
     const template = await Template.findByIdAndUpdate(
       id,
-      {
-        name,
-        description: description || '',
-        category,
-        content,
-        tags: tags || [],
-        status: status || 'draft',
-        thumbnail: thumbnail || '/assets/images/templates/default.jpg',
-        createdBy: createdBy || 'System',
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 

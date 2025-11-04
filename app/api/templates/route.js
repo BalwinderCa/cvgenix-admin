@@ -21,26 +21,60 @@ export async function POST(request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { name, description, category, content, tags, status, thumbnail, createdBy } = body;
+    const { 
+      name, 
+      description, 
+      category, 
+      content, 
+      tags, 
+      status, 
+      thumbnail, 
+      preview,
+      createdBy,
+      renderEngine,
+      canvasData,
+      builderData,
+      isActive,
+      isPremium,
+      isPopular,
+      isNewTemplate,
+      metadata
+    } = body;
 
     // Validate required fields
-    if (!name || !category || !content) {
+    if (!name || !category) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: name, category, and content are required' },
+        { success: false, error: 'Missing required fields: name and category are required' },
         { status: 400 }
       );
     }
 
-    const template = await Template.create({
+    // Build template object
+    const templateData = {
       name,
       description: description || '',
       category,
-      content,
+      content: content || '',
       tags: tags || [],
       status: status || 'draft',
       thumbnail: thumbnail || '/assets/images/templates/default.jpg',
+      preview: preview || thumbnail || '/assets/images/templates/default.jpg',
       createdBy: createdBy || 'System',
-    });
+      renderEngine: renderEngine || 'builder',
+      canvasData: canvasData || null,
+      builderData: builderData || null,
+      isActive: isActive !== undefined ? isActive : (status === 'active'),
+      isPremium: isPremium || false,
+      isPopular: isPopular || false,
+      isNewTemplate: isNewTemplate || false,
+      metadata: metadata || {
+        colorScheme: 'light',
+        layout: 'single-column',
+        complexity: 'moderate',
+      },
+    };
+
+    const template = await Template.create(templateData);
 
     return NextResponse.json({ success: true, data: template }, { status: 201 });
   } catch (error) {
