@@ -26,20 +26,35 @@ const COLUMNS = [
     },
   },
   {
-    Header: "Plan Name",
-    accessor: "name",
+    Header: "Plan Title",
+    accessor: "title",
     Cell: (row) => {
+      const plan = row.row.original;
+      const title = plan.title || plan.name || "N/A";
       return (
         <div>
           <span className="text-sm font-medium text-slate-900 dark:text-white">
-            {row?.cell?.value}
+            {title}
           </span>
-          {row.row.original.popular && (
+          {plan.popular && (
             <span className="ml-2 text-xs px-2 py-0.5 bg-primary-500 text-white rounded">
-              Popular
+              Most Popular
             </span>
           )}
         </div>
+      );
+    },
+  },
+  {
+    Header: "Subtitle",
+    accessor: "subtitle",
+    Cell: (row) => {
+      const plan = row.row.original;
+      const subtitle = plan.subtitle || plan.description || "";
+      return (
+        <span className="text-sm text-slate-600 dark:text-slate-300">
+          {subtitle}
+        </span>
       );
     },
   },
@@ -48,54 +63,30 @@ const COLUMNS = [
     accessor: "price",
     Cell: (row) => {
       const plan = row.row.original;
+      const priceType = plan.priceType || "one-time";
       return (
         <span className="text-sm text-slate-600 dark:text-slate-300">
-          {plan.currency} {plan.price}
+          ${plan.price} / {priceType === "one-time" ? "one-time" : priceType}
         </span>
       );
     },
   },
   {
-    Header: "Duration",
-    accessor: "duration",
+    Header: "Credits",
+    accessor: "credits",
     Cell: (row) => {
+      const plan = row.row.original;
+      const credits = plan.credits || 0;
+      const creditsDesc = plan.creditsDescription || "Resume + ATS Analysis";
       return (
-        <span className="text-sm text-slate-600 dark:text-slate-300 capitalize">
-          {row?.cell?.value}
-        </span>
-      );
-    },
-  },
-  {
-    Header: "Templates Edit",
-    accessor: "templatesEdit",
-    Cell: (row) => {
-      return (
-        <span className="text-sm text-slate-600 dark:text-slate-300">
-          {row?.cell?.value || 0}
-        </span>
-      );
-    },
-  },
-  {
-    Header: "ATS Score",
-    accessor: "atsScore",
-    Cell: (row) => {
-      return (
-        <span className="text-sm text-slate-600 dark:text-slate-300">
-          {row?.cell?.value || 0}
-        </span>
-      );
-    },
-  },
-  {
-    Header: "CV Downloads",
-    accessor: "cvDownloads",
-    Cell: (row) => {
-      return (
-        <span className="text-sm text-slate-600 dark:text-slate-300">
-          {row?.cell?.value || 0}
-        </span>
+        <div>
+          <span className="text-sm font-medium text-slate-900 dark:text-white">
+            {credits} Credits
+          </span>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {creditsDesc}
+          </div>
+        </div>
       );
     },
   },
@@ -231,7 +222,8 @@ const PlansTable = () => {
   };
 
   const handleDeletePlan = async (plan) => {
-    if (window.confirm(`Are you sure you want to delete ${plan.name}?`)) {
+    const planName = plan.title || plan.name || "this plan";
+    if (window.confirm(`Are you sure you want to delete ${planName}?`)) {
       try {
         const planId = plan._id || plan.id;
         const response = await fetch(`/api/plans/${planId}`, {

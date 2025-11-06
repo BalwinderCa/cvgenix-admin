@@ -49,6 +49,10 @@ const SettingsSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    companyDescription: {
+      type: String,
+      default: '',
+    },
     taxId: {
       type: String,
       default: '',

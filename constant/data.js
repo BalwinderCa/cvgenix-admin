@@ -29,6 +29,24 @@ export const menuItems = [
     isHide: false,
   },
   {
+    title: "FAQs",
+    icon: "heroicons-outline:question-mark-circle",
+    link: "faqs",
+    isHide: false,
+  },
+  {
+    title: "Support",
+    icon: "heroicons-outline:chat-bubble-left-right",
+    link: "support",
+    isHide: false,
+  },
+  {
+    title: "Payments",
+    icon: "heroicons-outline:credit-card",
+    link: "payments",
+    isHide: false,
+  },
+  {
     title: "Email",
     icon: "heroicons-outline:mail",
     link: "email",

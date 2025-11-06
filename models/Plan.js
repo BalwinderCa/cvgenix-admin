@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 
 const PlanSchema = new mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
-      required: [true, 'Please provide a plan name'],
+      required: [true, 'Please provide a plan title'],
       trim: true,
     },
-    description: {
+    subtitle: {
       type: String,
       trim: true,
     },
@@ -16,32 +16,20 @@ const PlanSchema = new mongoose.Schema(
       required: [true, 'Please provide a price'],
       default: 0,
     },
-    currency: {
+    priceType: {
       type: String,
-      default: 'USD',
+      enum: ['one-time', 'monthly', 'yearly'],
+      default: 'one-time',
     },
-    duration: {
+    credits: {
+      type: Number,
+      required: [true, 'Please provide number of credits'],
+      default: 0,
+    },
+    creditsDescription: {
       type: String,
-      enum: ['monthly', 'yearly', 'lifetime'],
-      default: 'monthly',
-    },
-    templatesEdit: {
-      type: Number,
-      required: [true, 'Please provide number of templates that can be edited'],
-      default: 0,
-    },
-    atsScore: {
-      type: Number,
-      required: [true, 'Please provide ATS score limit'],
-      default: 0,
-    },
-    cvDownloads: {
-      type: Number,
-      default: 0,
-    },
-    coverLetterDownloads: {
-      type: Number,
-      default: 0,
+      trim: true,
+      default: 'Resume + ATS Analysis',
     },
     features: {
       type: [String],

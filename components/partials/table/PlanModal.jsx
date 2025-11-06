@@ -8,15 +8,12 @@ import Checkbox from "@/components/ui/Checkbox";
 
 const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    title: "",
+    subtitle: "",
     price: 0,
-    currency: "USD",
-    duration: "monthly",
-    templatesEdit: 0,
-    atsScore: 0,
-    cvDownloads: 0,
-    coverLetterDownloads: 0,
+    priceType: "one-time",
+    credits: 0,
+    creditsDescription: "Resume + ATS Analysis",
     features: [],
     status: "active",
     popular: false,
@@ -28,30 +25,24 @@ const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
   useEffect(() => {
     if (isEdit && plan) {
       setFormData({
-        name: plan.name || "",
-        description: plan.description || "",
+        title: plan.title || plan.name || "",
+        subtitle: plan.subtitle || plan.description || "",
         price: plan.price || 0,
-        currency: plan.currency || "USD",
-        duration: plan.duration || "monthly",
-        templatesEdit: plan.templatesEdit || 0,
-        atsScore: plan.atsScore || 0,
-        cvDownloads: plan.cvDownloads || 0,
-        coverLetterDownloads: plan.coverLetterDownloads || 0,
+        priceType: plan.priceType || "one-time",
+        credits: plan.credits || 0,
+        creditsDescription: plan.creditsDescription || "Resume + ATS Analysis",
         features: plan.features || [],
         status: plan.status || "active",
         popular: plan.popular || false,
       });
     } else {
       setFormData({
-        name: "",
-        description: "",
+        title: "",
+        subtitle: "",
         price: 0,
-        currency: "USD",
-        duration: "monthly",
-        templatesEdit: 0,
-        atsScore: 0,
-        cvDownloads: 0,
-        coverLetterDownloads: 0,
+        priceType: "one-time",
+        credits: 0,
+        creditsDescription: "Resume + ATS Analysis",
         features: [],
         status: "active",
         popular: false,
@@ -96,17 +87,14 @@ const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) {
-      newErrors.name = "Plan name is required";
+    if (!formData.title.trim()) {
+      newErrors.title = "Plan title is required";
     }
     if (formData.price < 0) {
       newErrors.price = "Price must be 0 or greater";
     }
-    if (formData.templatesEdit < 0) {
-      newErrors.templatesEdit = "Templates edit count must be 0 or greater";
-    }
-    if (formData.atsScore < 0) {
-      newErrors.atsScore = "ATS score must be 0 or greater";
+    if (formData.credits < 0) {
+      newErrors.credits = "Credits must be 0 or greater";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -119,17 +107,10 @@ const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
     }
   };
 
-  const currencyOptions = [
-    { value: "USD", label: "USD" },
-    { value: "EUR", label: "EUR" },
-    { value: "GBP", label: "GBP" },
-    { value: "CAD", label: "CAD" },
-  ];
-
-  const durationOptions = [
+  const priceTypeOptions = [
+    { value: "one-time", label: "One-time" },
     { value: "monthly", label: "Monthly" },
     { value: "yearly", label: "Yearly" },
-    { value: "lifetime", label: "Lifetime" },
   ];
 
   const statusOptions = [
@@ -163,15 +144,26 @@ const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Textinput
-              label="Plan Name"
+              label="Plan Title"
               type="text"
-              placeholder="Enter plan name"
-              value={formData.name}
+              placeholder="e.g., Starter Pack, Popular Pack"
+              value={formData.title}
               onChange={handleChange}
-              id="name"
-              error={errors.name ? { message: errors.name } : null}
+              id="title"
+              error={errors.title ? { message: errors.title } : null}
             />
 
+            <Textinput
+              label="Subtitle"
+              type="text"
+              placeholder="e.g., Perfect for getting started"
+              value={formData.subtitle}
+              onChange={handleChange}
+              id="subtitle"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Textinput
               label="Price"
               type="number"
@@ -183,84 +175,37 @@ const PlanModal = ({ isOpen, onClose, onSave, plan, isEdit }) => {
               step="0.01"
               error={errors.price ? { message: errors.price } : null}
             />
-          </div>
-
-          <Textinput
-            label="Description"
-            type="text"
-            placeholder="Enter plan description"
-            value={formData.description}
-            onChange={handleChange}
-            id="description"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Currency"
-              placeholder="Select currency"
-              options={currencyOptions}
-              value={formData.currency}
-              onChange={handleChange}
-              id="currency"
-            />
 
             <Select
-              label="Duration"
-              placeholder="Select duration"
-              options={durationOptions}
-              value={formData.duration}
+              label="Price Type"
+              placeholder="Select price type"
+              options={priceTypeOptions}
+              value={formData.priceType}
               onChange={handleChange}
-              id="duration"
+              id="priceType"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Textinput
-              label="Templates Edit"
+              label="Credits"
               type="number"
               placeholder="0"
-              value={formData.templatesEdit}
+              value={formData.credits}
               onChange={handleChange}
-              id="templatesEdit"
+              id="credits"
               min="0"
-              error={errors.templatesEdit ? { message: errors.templatesEdit } : null}
-              description="Number of templates user can edit"
+              error={errors.credits ? { message: errors.credits } : null}
+              description="Number of credits included"
             />
 
             <Textinput
-              label="ATS Score"
-              type="number"
-              placeholder="0"
-              value={formData.atsScore}
+              label="Credits Description"
+              type="text"
+              placeholder="e.g., Resume + ATS Analysis"
+              value={formData.creditsDescription}
               onChange={handleChange}
-              id="atsScore"
-              min="0"
-              error={errors.atsScore ? { message: errors.atsScore } : null}
-              description="ATS score limit"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Textinput
-              label="CV Downloads"
-              type="number"
-              placeholder="0"
-              value={formData.cvDownloads}
-              onChange={handleChange}
-              id="cvDownloads"
-              min="0"
-              description="Number of CV downloads allowed"
-            />
-
-            <Textinput
-              label="Cover Letter Downloads"
-              type="number"
-              placeholder="0"
-              value={formData.coverLetterDownloads}
-              onChange={handleChange}
-              id="coverLetterDownloads"
-              min="0"
-              description="Number of cover letter downloads allowed"
+              id="creditsDescription"
             />
           </div>
 

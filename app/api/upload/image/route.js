@@ -1,10 +1,34 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { uploadToS3, uploadThumbnailsToS3, isS3Configured } from '@/lib/s3';
+
+// Determine folder structure based on upload type
+const getFolderForType = (type) => {
+  const folderMap = {
+    'image': 'images',
+    'logo': 'company/logo',
+    'company-logo': 'company/logo',
+    'thumbnail': 'templates/previews',
+    'template': 'templates/previews',
+    'avatar': 'avatars',
+    'document': 'documents',
+  };
+  
+  return folderMap[type] || 'images';
+};
 
 export async function POST(request) {
   try {
+    // Check if S3 is configured - REQUIRED
+    if (!isS3Configured()) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'S3 storage is not configured. Please configure AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_REGION) in your environment variables.' 
+        },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
     const thumbnailsJson = formData.get('thumbnails');
@@ -15,12 +39,6 @@ export async function POST(request) {
         { success: false, error: 'No file provided' },
         { status: 400 }
       );
-    }
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'templates');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
     }
 
     // Generate unique filename
@@ -34,43 +52,40 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Save original file
-    const filePath = join(uploadsDir, fileName);
-    await writeFile(filePath, buffer);
-
-    // Parse thumbnails if provided
+    // Determine content type from file
+    const contentType = file.type || 'image/jpeg';
+    
+    // Get appropriate folder based on upload type
+    const folder = getFolderForType(type);
+    
+    // Upload to S3
+    const uploadResult = await uploadToS3(
+      buffer,
+      fileName,
+      contentType,
+      {
+        folder: folder,
+        cacheControl: 'max-age=31536000',
+      }
+    );
+    
+    const fileUrl = uploadResult.url;
     let thumbnailUrls = {};
+
+    // Upload thumbnails if provided
     if (thumbnailsJson) {
       try {
         const thumbnails = JSON.parse(thumbnailsJson);
-        const thumbnailDir = join(uploadsDir, 'thumbnails');
-        
-        if (!existsSync(thumbnailDir)) {
-          await mkdir(thumbnailDir, { recursive: true });
-        }
-
-        // Save each thumbnail
-        for (const [size, base64Data] of Object.entries(thumbnails)) {
-          if (size === 'original') continue; // Skip original as we already saved it
-          
-          // Convert base64 to buffer
-          const base64 = base64Data.split(',')[1] || base64Data;
-          const thumbnailBuffer = Buffer.from(base64, 'base64');
-          
-          // Save thumbnail
-          const thumbnailFileName = `${baseName}_${timestamp}_${size}.jpg`;
-          const thumbnailPath = join(thumbnailDir, thumbnailFileName);
-          await writeFile(thumbnailPath, thumbnailBuffer);
-          
-          thumbnailUrls[size] = `/uploads/templates/thumbnails/${thumbnailFileName}`;
-        }
+        thumbnailUrls = await uploadThumbnailsToS3(
+          thumbnails,
+          `${baseName}_${timestamp}`,
+          folder
+        );
       } catch (error) {
-        console.error('Error saving thumbnails:', error);
+        console.error('Error uploading thumbnails to S3:', error);
         // Continue even if thumbnails fail
       }
     }
-
-    const fileUrl = `/uploads/templates/${fileName}`;
 
     return NextResponse.json({
       success: true,
@@ -90,5 +105,4 @@ export async function POST(request) {
     );
   }
 }
-
 

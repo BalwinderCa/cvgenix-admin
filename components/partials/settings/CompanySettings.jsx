@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import Card from "@/components/ui/Card";
 import Textinput from "@/components/ui/Textinput";
+import Textarea from "@/components/ui/Textarea";
+import Fileinput from "@/components/ui/Fileinput";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
 import Icon from "@/components/ui/Icon";
@@ -9,6 +11,8 @@ import Icon from "@/components/ui/Icon";
 const CompanySettings = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
   const [formData, setFormData] = useState({
     companyName: "",
     companyEmail: "",
@@ -20,6 +24,7 @@ const CompanySettings = () => {
     companyCountry: "",
     companyWebsite: "",
     companyLogo: "",
+    companyDescription: "",
     taxId: "",
   });
 
@@ -45,6 +50,7 @@ const CompanySettings = () => {
           companyCountry: result.data.companyCountry || "",
           companyWebsite: result.data.companyWebsite || "",
           companyLogo: result.data.companyLogo || "",
+          companyDescription: result.data.companyDescription || "",
           taxId: result.data.taxId || "",
         });
       }
@@ -61,6 +67,57 @@ const CompanySettings = () => {
       ...prev,
       [id]: value,
     }));
+  };
+
+  const handleLogoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setLogoFile(file);
+    setUploadingLogo(true);
+
+    try {
+      // Upload file to server
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'company-logo');
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setFormData((prev) => ({
+          ...prev,
+          companyLogo: result.data.url,
+        }));
+        toast.success('Logo uploaded successfully');
+      } else {
+        toast.error(result.error || 'Failed to upload logo');
+        setLogoFile(null);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Error uploading logo: ' + error.message);
+      setLogoFile(null);
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -161,13 +218,48 @@ const CompanySettings = () => {
             id="taxId"
           />
 
-          <Textinput
-            label="Company Logo URL"
-            type="url"
-            placeholder="Enter logo image URL"
-            value={formData.companyLogo}
+          <div className="fromGroup md:col-span-2">
+            <label htmlFor="companyLogo" className="block capitalize form-label">
+              Company Logo
+            </label>
+            <div className="relative">
+              <Fileinput
+                id="companyLogo"
+                name="companyLogo"
+                onChange={handleLogoChange}
+                selectedFile={logoFile}
+                preview={true}
+                accept="image/*"
+                placeholder="Choose logo image file..."
+                label="Browse"
+                className="mt-2"
+              />
+              {uploadingLogo && (
+                <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Uploading logo...
+                </div>
+              )}
+              {formData.companyLogo && !logoFile && (
+                <div className="mt-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Current Logo:</p>
+                  <img
+                    src={formData.companyLogo}
+                    alt="Company Logo"
+                    className="w-[200px] h-[200px] object-contain border border-slate-200 dark:border-slate-700 rounded p-2"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Textarea
+            label="Company Description"
+            placeholder="Enter company description"
+            value={formData.companyDescription}
             onChange={handleChange}
-            id="companyLogo"
+            id="companyDescription"
+            row={4}
+            className="md:col-span-2"
           />
 
           <Textinput

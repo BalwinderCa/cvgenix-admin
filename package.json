@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4000",
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.925.0",
+    "@aws-sdk/s3-request-presigner": "^3.925.0",
     "@fullcalendar/core": "^6.1.4",
     "@fullcalendar/daygrid": "^6.1.4",
     "@fullcalendar/interaction": "^6.1.4",
@@ -25,6 +27,7 @@
     "apexcharts": "^3.33.2",
     "chart.js": "^4.2.1",
     "cleave.js": "^1.6.0",
+    "cloudinary": "^2.8.0",
     "dayjs": "^1.11.7",
     "eslint": "8.36.0",
     "eslint-config-next": "^14.0.4",

@@ -53,7 +53,7 @@ MONGODB_URI=your_mongodb_connection_string
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ## Project Structure
 
@@ -81,11 +81,22 @@ npm run dev
 
 ## Environment Variables
 
-Create a `.env` file with the following variables:
+Create a `.env` or `.env.local` file in the root directory with the following variables:
 
 ```env
+# MongoDB
 MONGODB_URI=your_mongodb_connection_string
+
+# AWS S3 (Optional - for template preview image storage)
+# If not provided, images will be stored locally in public/uploads/templates
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=your-bucket-name
+AWS_CLOUDFRONT_URL=https://your-cloudfront-domain.cloudfront.net  # Optional: for CDN
 ```
+
+**Note**: AWS S3 is optional. If you don't provide S3 credentials, the system will automatically fall back to local file storage. However, using S3 is recommended for better scalability, reliability, and CDN delivery (with CloudFront).
 
 ## Scripts
 
